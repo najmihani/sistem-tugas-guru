@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Tugas Guru - SMK (P) Jalan Ipoh</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===================== SCHOOL HEADER ===================== -->
+<header class="school-header">
+  <div class="container d-flex align-center justify-between">
+    <div class="header-logo">
+      <div class="logo-icon">📚</div>
+      <div>
+        <div class="school-name" id="schoolNameHeader">SMK (P) Jalan Ipoh</div>
+        <div class="school-subtitle">Sistem Pengurusan Tugas Guru</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <a href="admin/login.html" class="admin-link">🔐 Admin Login</a>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== MAIN CONTENT ===================== -->
+<main class="section">
+  <div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header d-flex flex-wrap justify-between align-center gap-2">
+      <div>
+        <h2>👨‍🏫 Senarai Guru & Tugasan</h2>
+        <p>Paparan lengkap guru dan tugas yang diamanahkan</p>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="form-control" id="searchGuru" placeholder="Cari nama guru..." oninput="renderGuruCards()">
+      </div>
+    </div>
+
+    <!-- Kategori Filter Tabs -->
+    <div class="filter-tabs" id="filterTabs">
+      <button class="filter-tab active" data-kategori="all" onclick="filterKategori(this, 'all')">Semua</button>
+    </div>
+
+    <!-- Teacher Cards Grid -->
+    <div class="row" id="guruCardsContainer">
+      <!-- Dynamic content rendered by JS -->
+    </div>
+
+    <!-- Footer Info -->
+    <div class="footer mt-5" id="footerInfo">
+      <p>© 2026 SMK (P) Jalan Ipoh. Sistem Pengurusan Tugas Guru.</p>
+    </div>
+
+  </div>
+</main>
+
+<!-- ===================== SCRIPTS ===================== -->
+<script src="js/data.js"></script>
+<script>
+// ============================================================
+// Render Functions — Public Teacher Roster
+// ============================================================
+
+// Kategori filter
+var currentFilter = 'all';
+
+function initFilterTabs() {
+  var container = document.getElementById('filterTabs');
+  var kategoriList = getKategori();
+
+  kategoriList.forEach(function(k) {
+    var btn = document.createElement('button');
+    btn.className = 'filter-tab';
+    btn.setAttribute('data-kategori', k.id);
+    btn.textContent = k.nama;
+    btn.onclick = function() { filterKategori(this, k.id); };
+    container.appendChild(btn);
+  });
+}
+
+function filterKategori(el, kategoriId) {
+  currentFilter = kategoriId;
+  // Update active state
+  var tabs = document.querySelectorAll('.filter-tab');
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+  renderGuruCards();
+}
+
+function renderGuruCards() {
+  var container = document.getElementById('guruCardsContainer');
+  var query = document.getElementById('searchGuru').value.trim().toLowerCase();
+  var guruList = getGuru();
+  var tugas = getTugas();
+  var tugasan = getTugasan();
+  var kategori = getKategori();
+
+  // Filter by search
+  if (query) {
+    guruList = guruList.filter(function(g) {
+      return g.nama.toLowerCase().includes(query) ||
+             g.jawatan.toLowerCase().includes(query);
+    });
+  }
+
+  if (guruList.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="flex:0 0 100%">' +
+      '<div class="empty-icon">🔍</div>' +
+      '<h4>Tiada guru dijumpai</h4>' +
+      '<p>Cuba ubah carian atau filter anda</p>' +
+      '</div>';
+    return;
+  }
+
+  var html = '';
+
+  guruList.forEach(function(guru) {
+    // Get assignments for this teacher
+    var guruTugasan = tugasan.filter(function(a) { return a.guruId === guru.id; });
+    var assignedTugas = [];
+
+    guruTugasan.forEach(function(a) {
+      var t = tugas.find(function(tk) { return tk.id === a.tugasId; });
+      if (t) {
+        // Apply kategori filter
+        if (currentFilter !== 'all' && t.kategori !== currentFilter) return;
+        assignedTugas.push({
+          id: a.id,
+          nama: t.nama,
+          point: t.point,
+          kategori: t.kategori,
+          kategoriNama: getKategoriNama(t.kategori),
+          status: a.status
+        });
+      }
+    });
+
+    // If filter is active and teacher has no matching tasks, skip
+    if (currentFilter !== 'all' && assignedTugas.length === 0) return;
+
+    html += '<div class="col-12 col-md-6">';
+    html += '<div class="teacher-card">';
+    html += '<div class="card-top">';
+    html += '<div class="avatar">' + getInitials(guru.nama) + '</div>';
+    html += '<div class="teacher-info">';
+    html += '<h4>' + guru.nama + '</h4>';
+    html += '<div class="jawatan">' + guru.jawatan + '</div>';
+    html += '</div>';
+    html += '<span class="task-count">' + assignedTugas.length + ' tugas</span>';
+    html += '</div>';
+    html += '<div class="card-body">';
+
+    if (assignedTugas.length === 0) {
+      html += '<p class="text-muted" style="font-size:0.85rem;text-align:center;">Tiada tugasan buat masa ini</p>';
+    } else {
+      html += '<div class="task-list">';
+      assignedTugas.forEach(function(t) {
+        html += '<div class="task-item">';
+        html += '<div>';
+        html += '<span class="kategori-badge badge-' + kategoriBadgeClass(t.kategori) + '">' + t.kategoriNama + '</span> ';
+        html += '<strong>' + t.nama + '</strong>';
+        html += '</div>';
+        html += '<span class="task-point">' + t.point + ' pt</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>'; // card-body
+    html += '</div>'; // teacher-card
+    html += '</div>'; // col
+  });
+
+  if (html === '') {
+    html = '<div class="empty-state" style="flex:0 0 100%">' +
+      '<div class="empty-icon">📋</div>' +
+      '<h4>Tiada keputusan</h4>' +
+      '<p>Tiada guru dengan tugasan dalam kategori ini</p>' +
+      '</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+function getInitials(nama) {
+  var parts = nama.split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return nama.substring(0, 2).toUpperCase();
+}
+
+// Map functions from data.js (they exist globally but let's be safe)
+function getKategoriNama(id) {
+  var k = getKategori().find(function(k) { return k.id === id; });
+  return k ? k.nama : '—';
+}
+
+function kategoriBadgeClass(id) {
+  var map = { k1: 'pentadbiran', k2: 'kurikulum', k3: 'hem', k4: 'kokurikulum' };
+  return map[id] || 'pentadbiran';
+}
+
+// Apply school name from settings
+function applySchoolName() {
+  try {
+    var tetapan = getTetapan();
+    if (tetapan && tetapan.namaSekolah) {
+      document.getElementById('schoolNameHeader').textContent = tetapan.namaSekolah;
+    }
+  } catch(e) {}
+}
+
+// --- Init ---
+initFilterTabs();
+applySchoolName();
+renderGuruCards();
+</script>
+
+</body>
+</html>
