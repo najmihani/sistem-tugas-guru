@@ -106,7 +106,7 @@ async function apiPost(data) {
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(data)
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
