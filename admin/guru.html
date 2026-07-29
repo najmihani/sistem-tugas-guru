@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urus Guru - Sistem Tugas Guru</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-brand">📋 STG Admin</div>
+  <button class="navbar-toggle" onclick="document.querySelector('.navbar-nav').classList.toggle('show')">☰</button>
+  <ul class="navbar-nav">
+    <li class="nav-item"><a class="nav-link" href="index.html">🏠 Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link active" href="guru.html">👨‍🏫 Guru</a></li>
+    <li class="nav-item"><a class="nav-link" href="tugas.html">📝 Tugas</a></li>
+    <li class="nav-item"><a class="nav-link" href="tugasan.html">📌 Tugasan</a></li>
+    <li class="nav-item"><a class="nav-link" href="laporan.html">📊 Laporan</a></li>
+    <li class="nav-item"><a class="nav-link" href="tetapan.html">⚙️ Tetapan</a></li>
+    <li class="nav-item"><a class="nav-link logout-btn" href="#" onclick="stg.logout()">🚪 Log Keluar</a></li>
+  </ul>
+</nav>
+
+<main class="section">
+  <div class="container">
+
+    <div class="page-header d-flex flex-wrap justify-between align-center gap-2">
+      <div>
+        <h2>👨‍🏫 Urus Guru</h2>
+        <p>Tambah, kemaskini dan padam data guru</p>
+      </div>
+    </div>
+
+    <!-- Add Guru Form -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h3>➕ Tambah Guru Baru</h3>
+      </div>
+      <div class="card-body">
+        <form onsubmit="addNewGuru(event)" class="row" style="gap:0;margin:0;">
+          <div class="col-12 col-md-5" style="padding-right:8px;">
+            <div class="form-group">
+              <label for="guruNama">Nama Guru</label>
+              <input type="text" id="guruNama" class="form-control" placeholder="Cth: Cikgu Ahmad" required>
+            </div>
+          </div>
+          <div class="col-12 col-md-5" style="padding:0 8px;">
+            <div class="form-group">
+              <label for="guruJawatan">Jawatan</label>
+              <input type="text" id="guruJawatan" class="form-control" placeholder="Cth: Guru Bahasa Melayu" required>
+            </div>
+          </div>
+          <div class="col-12 col-md-2 d-flex align-center" style="padding-left:8px;">
+            <div class="form-group" style="width:100%;padding-top:22px;">
+              <button type="submit" class="btn btn-primary btn-block">➕ Tambah</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Guru Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📋 Senarai Guru</h3>
+        <span class="text-muted" id="guruCount">0 orang</span>
+      </div>
+      <div class="card-body">
+        <div class="table-container">
+          <table class="table-responsive-mobile" id="guruTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nama Guru</th>
+                <th>Jawatan</th>
+                <th>Jumlah Tugasan</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="guruTbody">
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/app.js"></script>
+<script>
+// === Guru Management ===
+
+function renderGuru() {
+  var list = getGuru();
+  var tugasan = getTugasan();
+  var tbody = document.getElementById('guruTbody');
+  document.getElementById('guruCount').textContent = list.length + ' orang';
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tiada guru didaftarkan</td></tr>';
+    return;
+  }
+
+  var html = '';
+  list.forEach(function(g, i) {
+    var jumTugasan = tugasan.filter(function(a) { return a.guruId === g.id; }).length;
+    html += '<tr>';
+    html += '<td data-label="#">' + (i + 1) + '</td>';
+    html += '<td data-label="Nama Guru"><strong>' + g.nama + '</strong></td>';
+    html += '<td data-label="Jawatan">' + g.jawatan + '</td>';
+    html += '<td data-label="Jumlah Tugasan"><span class="badge badge-primary">' + jumTugasan + '</span></td>';
+    html += '<td data-label="Tindakan">';
+    html += '<div class="actions">';
+    html += '<button class="btn btn-sm btn-danger" onclick="confirmDeleteGuru(\'' + g.id + '\', \'' + g.nama.replace(/'/g, "\\'") + '\')">🗑️ Padam</button>';
+    html += '</div>';
+    html += '</td>';
+    html += '</tr>';
+  });
+
+  tbody.innerHTML = html;
+}
+
+function addNewGuru(e) {
+  e.preventDefault();
+  var nama = document.getElementById('guruNama').value;
+  var jawatan = document.getElementById('guruJawatan').value;
+
+  if (!nama || !jawatan) {
+    stg.showFlash('Sila isi semua ruangan.', 'danger');
+    return;
+  }
+
+  var result = addGuru(nama, jawatan);
+  if (result) {
+    stg.showFlash('Guru "' + nama + '" berjaya ditambah!', 'success');
+    document.getElementById('guruNama').value = '';
+    document.getElementById('guruJawatan').value = '';
+    document.getElementById('guruNama').focus();
+    renderGuru();
+  }
+}
+
+function confirmDeleteGuru(id, nama) {
+  if (!confirm('Anda pasti ingin memadam "' + nama + '"? Semua tugasan berkaitan juga akan dipadam.')) {
+    return;
+  }
+  deleteGuru(id);
+  stg.showFlash('Guru "' + nama + '" telah dipadam.', 'warning');
+  renderGuru();
+}
+
+// === Init ===
+renderGuru();
+</script>
+
+</body>
+</html>
