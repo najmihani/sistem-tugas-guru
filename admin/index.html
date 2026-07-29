@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin - Sistem Tugas Guru</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-brand">📋 STG Admin</div>
+  <button class="navbar-toggle" onclick="document.querySelector('.navbar-nav').classList.toggle('show')">☰</button>
+  <ul class="navbar-nav">
+    <li class="nav-item"><a class="nav-link active" href="index.html">🏠 Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link" href="guru.html">👨‍🏫 Guru</a></li>
+    <li class="nav-item"><a class="nav-link" href="tugas.html">📝 Tugas</a></li>
+    <li class="nav-item"><a class="nav-link" href="tugasan.html">📌 Tugasan</a></li>
+    <li class="nav-item"><a class="nav-link" href="laporan.html">📊 Laporan</a></li>
+    <li class="nav-item"><a class="nav-link" href="tetapan.html">⚙️ Tetapan</a></li>
+    <li class="nav-item"><a class="nav-link logout-btn" href="#" onclick="stg.logout()">🚪 Log Keluar</a></li>
+  </ul>
+</nav>
+
+<main class="section">
+  <div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h2>🏠 Dashboard Pentadbiran</h2>
+      <p>Ringkasan sistem pengurusan tugas guru</p>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="row" id="statCards">
+      <!-- Filled by JS -->
+    </div>
+
+    <!-- Quick Links -->
+    <div class="mt-5">
+      <div class="card">
+        <div class="card-header">
+          <h3>🔗 Pautan Pantas</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-12 col-md-6 col-sm-12 mb-3">
+              <a href="guru.html" class="card" style="display:block;padding:1.25rem;text-decoration:none;color:inherit;">
+                <div style="font-size:2rem;margin-bottom:6px;">👨‍🏫</div>
+                <h4>Urus Guru</h4>
+                <p class="text-muted" style="font-size:0.85rem;">Tambah, kemaskini dan padam data guru</p>
+              </a>
+            </div>
+            <div class="col-12 col-md-6 col-sm-12 mb-3">
+              <a href="tugas.html" class="card" style="display:block;padding:1.25rem;text-decoration:none;color:inherit;">
+                <div style="font-size:2rem;margin-bottom:6px;">📝</div>
+                <h4>Urus Tugas</h4>
+                <p class="text-muted" style="font-size:0.85rem;">Tambah, kemaskini dan padam data tugas</p>
+              </a>
+            </div>
+            <div class="col-12 col-md-6 col-sm-12 mb-3">
+              <a href="tugasan.html" class="card" style="display:block;padding:1.25rem;text-decoration:none;color:inherit;">
+                <div style="font-size:2rem;margin-bottom:6px;">📌</div>
+                <h4>Urus Tugasan</h4>
+                <p class="text-muted" style="font-size:0.85rem;">Berikan tugas kepada guru</p>
+              </a>
+            </div>
+            <div class="col-12 col-md-6 col-sm-12 mb-3">
+              <a href="laporan.html" class="card" style="display:block;padding:1.25rem;text-decoration:none;color:inherit;">
+                <div style="font-size:2rem;margin-bottom:6px;">📊</div>
+                <h4>Laporan & Analisis</h4>
+                <p class="text-muted" style="font-size:0.85rem;">Lihat jumlah mata dan bebanan tugas</p>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Assignments -->
+    <div class="mt-4">
+      <div class="card">
+        <div class="card-header">
+          <h3>📌 Tugasan Terkini</h3>
+          <a href="tugasan.html" class="btn btn-sm btn-accent">Urus Tugasan</a>
+        </div>
+        <div class="card-body">
+          <div class="table-container">
+            <table class="table-responsive-mobile" id="recentTable">
+              <thead>
+                <tr>
+                  <th>Guru</th>
+                  <th>Tugas</th>
+                  <th>Kategori</th>
+                  <th>Mata</th>
+                  <th>Status</th>
+                  <th>Tarikh</th>
+                </tr>
+              </thead>
+              <tbody id="recentTbody">
+                <!-- Filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/app.js"></script>
+<script>
+// === Dashboard Render ===
+
+function renderStats() {
+  var stats = getStatKeseluruhan();
+  var container = document.getElementById('statCards');
+
+  var cards = [
+    { icon: '👨‍🏫', bg: 'blue', value: stats.totalGuru, label: 'Jumlah Guru' },
+    { icon: '📝', bg: 'green', value: stats.totalTugas, label: 'Jumlah Tugas' },
+    { icon: '📌', bg: 'orange', value: stats.totalTugasan, label: 'Jumlah Tugasan' },
+    { icon: '✅', bg: 'purple', value: stats.totalTugasanAktif, label: 'Tugasan Aktif' }
+  ];
+
+  var html = '';
+  cards.forEach(function(c) {
+    html += '<div class="col-12 col-md-6 col-lg-3">';
+    html += '<div class="stat-card">';
+    html += '<div class="stat-icon ' + c.bg + '">' + c.icon + '</div>';
+    html += '<div class="stat-info">';
+    html += '<h3>' + c.value + '</h3>';
+    html += '<p>' + c.label + '</p>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function renderRecent() {
+  var tugasan = getTugasan();
+  var guru = getGuru();
+  var tugas = getTugas();
+
+  // Sort by most recent (by id, which has timestamp)
+  var recent = tugasan.slice().reverse().slice(0, 10);
+
+  var tbody = document.getElementById('recentTbody');
+
+  if (recent.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Tiada tugasan buat masa ini</td></tr>';
+    return;
+  }
+
+  var html = '';
+  recent.forEach(function(a) {
+    var g = guru.find(function(g) { return g.id === a.guruId; });
+    var t = tugas.find(function(t) { return t.id === a.tugasId; });
+    var guruNama = g ? g.nama : '—';
+    var tugasNama = t ? t.nama : '—';
+    var tugasPoint = t ? t.point : 0;
+    var kategoriNama = t ? stg.kategoriNamaBoleh(t.kategori) : '—';
+    var kategoriClass = t ? 'badge-' + getKategoriColorClass(t.kategori) : '';
+
+    html += '<tr>';
+    html += '<td data-label="Guru"><strong>' + guruNama + '</strong></td>';
+    html += '<td data-label="Tugas">' + tugasNama + '</td>';
+    html += '<td data-label="Kategori"><span class="badge-kategori ' + kategoriClass + '">' + kategoriNama + '</span></td>';
+    html += '<td data-label="Mata"><span class="badge badge-pt">' + tugasPoint + '</span></td>';
+    html += '<td data-label="Status"><span class="badge badge-success">' + a.status + '</span></td>';
+    html += '<td data-label="Tarikh">' + stg.formatDate(a.tarikh) + '</td>';
+    html += '</tr>';
+  });
+
+  tbody.innerHTML = html;
+}
+
+function getKategoriColorClass(id) {
+  var map = { k1: 'pentadbiran', k2: 'kurikulum', k3: 'hem', k4: 'kokurikulum' };
+  return map[id] || 'pentadbiran';
+}
+
+// === Init ===
+renderStats();
+renderRecent();
+</script>
+
+</body>
+</html>

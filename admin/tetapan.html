@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tetapan - Sistem Tugas Guru</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-brand">📋 STG Admin</div>
+  <button class="navbar-toggle" onclick="document.querySelector('.navbar-nav').classList.toggle('show')">☰</button>
+  <ul class="navbar-nav">
+    <li class="nav-item"><a class="nav-link" href="index.html">🏠 Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link" href="guru.html">👨‍🏫 Guru</a></li>
+    <li class="nav-item"><a class="nav-link" href="tugas.html">📝 Tugas</a></li>
+    <li class="nav-item"><a class="nav-link" href="tugasan.html">📌 Tugasan</a></li>
+    <li class="nav-item"><a class="nav-link" href="laporan.html">📊 Laporan</a></li>
+    <li class="nav-item"><a class="nav-link active" href="tetapan.html">⚙️ Tetapan</a></li>
+    <li class="nav-item"><a class="nav-link logout-btn" href="#" onclick="stg.logout()">🚪 Log Keluar</a></li>
+  </ul>
+</nav>
+
+<main class="section">
+  <div class="container">
+
+    <div class="page-header">
+      <h2>⚙️ Tetapan Sistem</h2>
+      <p>Konfigurasi maklumat sekolah dan sistem</p>
+    </div>
+
+    <div class="row">
+      <!-- Settings Form -->
+      <div class="col-12 col-md-8">
+        <div class="card">
+          <div class="card-header">
+            <h3>🔧 Konfigurasi Sekolah</h3>
+          </div>
+          <div class="card-body">
+            <form onsubmit="saveSettings(event)">
+              <div class="form-group">
+                <label for="setNamaSekolah">Nama Sekolah</label>
+                <input type="text" id="setNamaSekolah" class="form-control" placeholder="Cth: SMK (P) Jalan Ipoh" required>
+              </div>
+
+              <div class="form-group">
+                <label for="setNamaSistem">Nama Sistem</label>
+                <input type="text" id="setNamaSistem" class="form-control" placeholder="Cth: Sistem Pengurusan Tugas Guru" required>
+              </div>
+
+              <div class="form-group">
+                <label for="setLogoUrl">URL Logo Sekolah</label>
+                <input type="url" id="setLogoUrl" class="form-control" placeholder="https://example.com/logo.png (optional)">
+                <small class="text-muted">Masukkan URL gambar logo. Biarkan kosong jika tiada.</small>
+              </div>
+
+              <div class="form-group">
+                <label for="setWarnaTema">Warna Tema</label>
+                <div class="d-flex gap-2 align-center" style="flex-wrap:wrap;">
+                  <input type="color" id="setWarnaTema" class="form-control" style="width:60px;height:44px;padding:2px;cursor:pointer;">
+                  <span id="warnaPreview" style="font-size:0.85rem;color:var(--gray-500);">#1e40af</span>
+                  <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                    <button type="button" class="btn btn-sm btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="pilihWarna('#1e40af')">🔵 Biru</button>
+                    <button type="button" class="btn btn-sm btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="pilihWarna('#059669')">🟢 Hijau</button>
+                    <button type="button" class="btn btn-sm btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="pilihWarna('#7c3aed')">🟣 Ungu</button>
+                    <button type="button" class="btn btn-sm btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="pilihWarna('#dc2626')">🔴 Merah</button>
+                    <button type="button" class="btn btn-sm btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="pilihWarna('#0891b2')">🩵 Cyan</button>
+                  </div>
+                </div>
+              </div>
+
+              <hr style="border-color:var(--gray-200);margin:1.5rem 0;">
+
+              <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-primary btn-lg">💾 Simpan Tetapan</button>
+                <button type="button" class="btn btn-outline btn-lg" onclick="resetData()">🔄 Reset Data</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Panel -->
+      <div class="col-12 col-md-4">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h3>ℹ️ Maklumat Sistem</h3>
+          </div>
+          <div class="card-body">
+            <div style="font-size:0.85rem;">
+              <p><strong>Versi:</strong> 1.0.0</p>
+              <p><strong>Sekolah:</strong> <span id="infoSekolah">—</span></p>
+              <p><strong>Sistem:</strong> HTML/CSS/JS (Plain)</p>
+              <p><strong>Penyimpanan:</strong> LocalStorage</p>
+              <p><strong>Data Awal:</strong> Mock data (8 guru, 16 tugas)</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>📊 Status Data</h3>
+          </div>
+          <div class="card-body" style="font-size:0.85rem;">
+            <div id="dataStatusContainer">
+              <p>Memuatkan...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Confirmation Modal (inline) -->
+    <div id="resetModal" class="modal-overlay" style="display:none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4>⚠️ Reset Data</h4>
+          <button type="button" class="btn-close" onclick="closeResetModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger">
+            ⚠️ Amaran: Tindakan ini akan memadam SEMUA data yang telah dimasukkan dan mengembalikan data asal (mock data).
+          </div>
+          <p>Adakah anda pasti mahu meneruskan?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeResetModal()">Batal</button>
+          <button class="btn btn-danger" onclick="confirmReset()">✅ Ya, Reset Data</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/app.js"></script>
+<script>
+// === Tetapan Management ===
+
+function loadSettings() {
+  var tetapan = getTetapan();
+  document.getElementById('setNamaSekolah').value = tetapan.namaSekolah || 'SMK (P) Jalan Ipoh';
+  document.getElementById('setNamaSistem').value = tetapan.namaSistem || 'Sistem Pengurusan Tugas Guru';
+  document.getElementById('setLogoUrl').value = tetapan.logoUrl || '';
+  var warna = tetapan.warnaTema || '#1e40af';
+  document.getElementById('setWarnaTema').value = warna;
+  document.getElementById('warnaPreview').textContent = warna;
+
+  document.getElementById('infoSekolah').textContent = tetapan.namaSekolah || '—';
+}
+
+function saveSettings(e) {
+  e.preventDefault();
+  var data = {
+    namaSekolah: document.getElementById('setNamaSekolah').value,
+    namaSistem: document.getElementById('setNamaSistem').value,
+    logoUrl: document.getElementById('setLogoUrl').value,
+    warnaTema: document.getElementById('setWarnaTema').value
+  };
+
+  var result = saveTetapan(data);
+  if (result) {
+    loadSettings();
+    updateDataStatus();
+    stg.showFlash('Tetapan berjaya disimpan!', 'success');
+  }
+}
+
+function pilihWarna(warna) {
+  document.getElementById('setWarnaTema').value = warna;
+  document.getElementById('warnaPreview').textContent = warna;
+}
+
+function updateDataStatus() {
+  var container = document.getElementById('dataStatusContainer');
+  var guru = getGuru();
+  var tugas = getTugas();
+  var tugasan = getTugasan();
+
+  container.innerHTML =
+    '<p>👨‍🏫 <strong>Guru:</strong> ' + guru.length + ' orang</p>' +
+    '<p>📝 <strong>Tugas:</strong> ' + tugas.length + ' jenis</p>' +
+    '<p>📌 <strong>Tugasan:</strong> ' + tugasan.length + ' tugasan</p>' +
+    '<hr style="border-color:var(--gray-200);margin:8px 0;">' +
+    '<p><small class="text-muted">Data disimpan dalam localStorage</small></p>';
+}
+
+function resetData() {
+  document.getElementById('resetModal').style.display = 'flex';
+}
+
+function closeResetModal() {
+  document.getElementById('resetModal').style.display = 'none';
+}
+
+function confirmReset() {
+  // Clear all data keys
+  localStorage.removeItem(STORAGE_KEYS.GURU);
+  localStorage.removeItem(STORAGE_KEYS.TUGAS);
+  localStorage.removeItem(STORAGE_KEYS.TUGASAN);
+  localStorage.removeItem(STORAGE_KEYS.TETAPAN);
+
+  // Re-initialize with mock data
+  initData();
+
+  closeResetModal();
+  loadSettings();
+  updateDataStatus();
+  stg.showFlash('Data telah direset kepada data asal.', 'success');
+}
+
+// === Init ===
+loadSettings();
+updateDataStatus();
+</script>
+
+</body>
+</html>

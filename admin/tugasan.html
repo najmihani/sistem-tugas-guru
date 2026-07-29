@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urus Tugasan - Sistem Tugas Guru</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-brand">📋 STG Admin</div>
+  <button class="navbar-toggle" onclick="document.querySelector('.navbar-nav').classList.toggle('show')">☰</button>
+  <ul class="navbar-nav">
+    <li class="nav-item"><a class="nav-link" href="index.html">🏠 Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link" href="guru.html">👨‍🏫 Guru</a></li>
+    <li class="nav-item"><a class="nav-link" href="tugas.html">📝 Tugas</a></li>
+    <li class="nav-item"><a class="nav-link active" href="tugasan.html">📌 Tugasan</a></li>
+    <li class="nav-item"><a class="nav-link" href="laporan.html">📊 Laporan</a></li>
+    <li class="nav-item"><a class="nav-link" href="tetapan.html">⚙️ Tetapan</a></li>
+    <li class="nav-item"><a class="nav-link logout-btn" href="#" onclick="stg.logout()">🚪 Log Keluar</a></li>
+  </ul>
+</nav>
+
+<main class="section">
+  <div class="container">
+
+    <div class="page-header d-flex flex-wrap justify-between align-center gap-2">
+      <div>
+        <h2>📌 Urus Tugasan</h2>
+        <p>Berikan tugas kepada guru-guru</p>
+      </div>
+    </div>
+
+    <!-- Assign Form -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h3>➕ Tugaskan Tugas kepada Guru</h3>
+      </div>
+      <div class="card-body">
+        <form onsubmit="assignNewTugasan(event)" class="row" style="gap:0;margin:0;">
+          <div class="col-12 col-md-4" style="padding-right:8px;">
+            <div class="form-group">
+              <label for="assignGuru">Pilih Guru</label>
+              <select id="assignGuru" class="form-control" required>
+                <option value="">— Pilih Guru —</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12 col-md-4" style="padding:0 8px;">
+            <div class="form-group">
+              <label for="assignTugas">Pilih Tugas</label>
+              <select id="assignTugas" class="form-control" required>
+                <option value="">— Pilih Tugas —</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12 col-md-2" style="padding:0 8px;">
+            <div class="form-group">
+              <label for="assignTarikh">Tarikh</label>
+              <input type="date" id="assignTarikh" class="form-control">
+            </div>
+          </div>
+          <div class="col-12 col-md-2 d-flex align-center" style="padding-left:8px;">
+            <div class="form-group" style="width:100%;padding-top:22px;">
+              <button type="submit" class="btn btn-primary btn-block">📌 Tugaskan</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Filter by Teacher -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h3>🔍 Tapis mengikut Guru</h3>
+      </div>
+      <div class="card-body">
+        <div class="row" style="gap:0;margin:0;">
+          <div class="col-12 col-md-6" style="padding-right:8px;">
+            <select id="filterGuru" class="form-control" onchange="renderTugasan()">
+              <option value="all">Semua Guru</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6" style="padding-left:8px;">
+            <select id="filterKategori" class="form-control" onchange="renderTugasan()">
+              <option value="all">Semua Kategori</option>
+              <option value="k1">Pentadbiran</option>
+              <option value="k2">Kurikulum</option>
+              <option value="k3">HEM</option>
+              <option value="k4">Kokurikulum</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tugasan Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📋 Senarai Tugasan</h3>
+        <span class="text-muted" id="tugasanCount">0 tugasan</span>
+      </div>
+      <div class="card-body">
+        <div class="table-container">
+          <table class="table-responsive-mobile" id="tugasanTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Guru</th>
+                <th>Tugas</th>
+                <th>Kategori</th>
+                <th>Mata</th>
+                <th>Status</th>
+                <th>Tarikh</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="tugasanTbody">
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/app.js"></script>
+<script>
+// === Tugasan Management ===
+
+function populateDropdowns() {
+  // Guru dropdown
+  var guruSelect = document.getElementById('assignGuru');
+  var filterGuru = document.getElementById('filterGuru');
+  var guruList = getGuru();
+
+  guruList.forEach(function(g) {
+    guruSelect.innerHTML += '<option value="' + g.id + '">' + g.nama + '</option>';
+    filterGuru.innerHTML += '<option value="' + g.id + '">' + g.nama + '</option>';
+  });
+
+  // Tugas dropdown
+  var tugasSelect = document.getElementById('assignTugas');
+  var tugasList = getTugas();
+
+  tugasList.forEach(function(t) {
+    tugasSelect.innerHTML += '<option value="' + t.id + '">' + t.nama + ' (' + t.point + ' pt)</option>';
+  });
+
+  // Set default date
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('assignTarikh').value = today;
+}
+
+function renderTugasan() {
+  var list = getTugasan();
+  var guru = getGuru();
+  var tugas = getTugas();
+  var filterGuruVal = document.getElementById('filterGuru').value;
+  var filterKatVal = document.getElementById('filterKategori').value;
+
+  // Apply filters
+  if (filterGuruVal !== 'all') {
+    list = list.filter(function(a) { return a.guruId === filterGuruVal; });
+  }
+  if (filterKatVal !== 'all') {
+    // Get tugas ids in that kategori
+    var tugasInKat = tugas.filter(function(t) { return t.kategori === filterKatVal; }).map(function(t) { return t.id; });
+    list = list.filter(function(a) { return tugasInKat.indexOf(a.tugasId) !== -1; });
+  }
+
+  var tbody = document.getElementById('tugasanTbody');
+  document.getElementById('tugasanCount').textContent = list.length + ' tugasan';
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Tiada tugasan buat masa ini</td></tr>';
+    return;
+  }
+
+  var html = '';
+  list.forEach(function(a, i) {
+    var g = guru.find(function(g) { return g.id === a.guruId; });
+    var t = tugas.find(function(t) { return t.id === a.tugasId; });
+    var guruNama = g ? g.nama : '—';
+    var tugasNama = t ? t.nama : '—';
+    var tugasPoint = t ? t.point : 0;
+    var kategoriNama = t ? stg.kategoriNamaBoleh(t.kategori) : '—';
+    var kategoriClass = t ? stg.kategoriBadgeClass(t.kategori) : '';
+    var statusClass = a.status === 'Aktif' ? 'badge-success' : 'badge-warning';
+
+    html += '<tr>';
+    html += '<td data-label="#">' + (i + 1) + '</td>';
+    html += '<td data-label="Guru"><strong>' + guruNama + '</strong></td>';
+    html += '<td data-label="Tugas">' + tugasNama + '</td>';
+    html += '<td data-label="Kategori"><span class="badge-kategori badge-' + kategoriClass + '">' + kategoriNama + '</span></td>';
+    html += '<td data-label="Mata"><span class="badge badge-pt">' + tugasPoint + '</span></td>';
+    html += '<td data-label="Status"><span class="badge ' + statusClass + '">' + a.status + '</span></td>';
+    html += '<td data-label="Tarikh">' + stg.formatDate(a.tarikh) + '</td>';
+    html += '<td data-label="Tindakan">';
+    html += '<div class="actions">';
+    if (a.status === 'Aktif') {
+      html += '<button class="btn btn-sm btn-warning" onclick="tukarStatus(\'' + a.id + '\', \'Selesai\')">✅ Selesai</button>';
+    } else {
+      html += '<button class="btn btn-sm btn-accent" onclick="tukarStatus(\'' + a.id + '\', \'Aktif\')">🔄 Aktifkan</button>';
+    }
+    html += '<button class="btn btn-sm btn-danger" onclick="confirmDeleteTugasan(\'' + a.id + '\')">🗑️</button>';
+    html += '</div>';
+    html += '</td>';
+    html += '</tr>';
+  });
+
+  tbody.innerHTML = html;
+}
+
+function assignNewTugasan(e) {
+  e.preventDefault();
+  var guruId = document.getElementById('assignGuru').value;
+  var tugasId = document.getElementById('assignTugas').value;
+  var tarikh = document.getElementById('assignTarikh').value;
+
+  if (!guruId || !tugasId) {
+    stg.showFlash('Sila pilih guru dan tugas.', 'danger');
+    return;
+  }
+
+  var result = assignTugas(guruId, tugasId, tarikh);
+
+  if (result.error) {
+    stg.showFlash(result.error, 'warning');
+    return;
+  }
+
+  if (result.success) {
+    // Get names for flash
+    var guru = getGuru().find(function(g) { return g.id === guruId; });
+    var tugas = getTugas().find(function(t) { return t.id === tugasId; });
+    stg.showFlash('Tugas "' + (tugas ? tugas.nama : '') + '" berjaya diberikan kepada ' + (guru ? guru.nama : ''), 'success');
+    document.getElementById('assignGuru').value = '';
+    document.getElementById('assignTugas').value = '';
+    renderTugasan();
+  }
+}
+
+function confirmDeleteTugasan(id) {
+  if (!confirm('Anda pasti ingin memadam tugasan ini?')) {
+    return;
+  }
+  deleteTugasan(id);
+  stg.showFlash('Tugasan telah dipadam.', 'warning');
+  renderTugasan();
+}
+
+function tukarStatus(id, statusBaru) {
+  updateTugasanStatus(id, statusBaru);
+  stg.showFlash('Status tugasan dikemaskini kepada "' + statusBaru + '".', 'success');
+  renderTugasan();
+}
+
+// === Init ===
+populateDropdowns();
+renderTugasan();
+</script>
+
+</body>
+</html>
