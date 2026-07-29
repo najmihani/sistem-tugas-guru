@@ -1,74 +1,81 @@
 /* ============================================================
    DATA SERVICE — Sistem Tugas Guru SMK (P) Jalan Ipoh
-   Mock data arrays + localStorage CRUD operations
-   All functions synchronous — no API calls
+   Google Sheets API + localStorage fallback
    ============================================================ */
+
+// --- API Configuration ---
+const API_URL = 'https://script.google.com/macros/s/AKfycbyy8nhXODk9IjlgmKcYLETu-iozNa4JxoekvCUEeShqzY_mNg-iQf5YcXSMoG-Vrb7MCg/exec';
 
 // --- Storage Keys ---
 const STORAGE_KEYS = {
   GURU: 'stg_guru',
   TUGAS: 'stg_tugas',
   TUGASAN: 'stg_tugasan',
-  TETAPAN: 'stg_tetapan'
+  TETAPAN: 'stg_tetapan',
+  KATEGORI: 'stg_kategori',
+  LAST_SYNC: 'stg_last_sync'
 };
 
-// --- Mock Data Initialization ---
+// ============================================================
+// MOCK DATA (fallback if API & localStorage both empty)
+// ============================================================
+
 const MOCK_GURU = [
-  { id: 'g1', nama: 'Cikgu Aminah', jawatan: 'Guru Kanan Pentadbiran' },
-  { id: 'g2', nama: 'Cikgu Sarah', jawatan: 'Guru Kanan Kurikulum' },
-  { id: 'g3', nama: 'Cikgu Zul', jawatan: 'Guru Kanan HEM' },
-  { id: 'g4', nama: 'Cikgu Aina', jawatan: 'Guru Kanan Kokurikulum' },
-  { id: 'g5', nama: 'Cikgu Rashid', jawatan: 'Guru Bahasa Melayu' },
-  { id: 'g6', nama: 'Cikgu Dewi', jawatan: 'Guru Sains' },
-  { id: 'g7', nama: 'Puan Fatimah', jawatan: 'Guru Matematik' },
-  { id: 'g8', nama: 'En. Kamal', jawatan: 'Guru Pendidikan Islam' }
+  { id: 'g001', nama: 'Cikgu Aminah Binti Abdullah', jawatan: 'Guru Akademik' },
+  { id: 'g002', nama: 'Cikgu Sarah Binti Mohd', jawatan: 'Guru Akademik' },
+  { id: 'g003', nama: 'Cikgu Zul Fadli Bin Ali', jawatan: 'Guru Akademik' },
+  { id: 'g004', nama: 'Cikgu Aina Binti Hassan', jawatan: 'Guru Perpustakaan' },
+  { id: 'g005', nama: 'Cikgu Rashid Bin Omar', jawatan: 'Guru ICT' },
+  { id: 'g006', nama: 'Cikgu Dewi Binti Rajan', jawatan: 'Guru Akademik' },
+  { id: 'g007', nama: 'Puan Hajah Fatimah Binti Yusof', jawatan: 'Pengetua' },
+  { id: 'g008', nama: 'En. Kamal Bin Aziz', jawatan: 'GPK' }
 ];
 
 const MOCK_KATEGORI = [
-  { id: 'k1', nama: 'Pentadbiran', color: 'pentadbiran' },
-  { id: 'k2', nama: 'Kurikulum', color: 'kurikulum' },
-  { id: 'k3', nama: 'HEM', color: 'hem' },
-  { id: 'k4', nama: 'Kokurikulum', color: 'kokurikulum' }
+  { id: 'kat01', nama: 'Pentadbiran' },
+  { id: 'kat02', nama: 'Kurikulum' },
+  { id: 'kat03', nama: 'HEM' },
+  { id: 'kat04', nama: 'Kokurikulum' }
 ];
 
 const MOCK_TUGAS = [
-  { id: 't1', nama: 'Guru Kelas', point: 5, kategori: 'k2', penerangan: 'Menguruskan kelas dan rekod pelajar' },
-  { id: 't2', nama: 'Setiausaha Peperiksaan', point: 8, kategori: 'k2', penerangan: 'Menyelaras jadual dan kertas peperiksaan' },
-  { id: 't3', nama: 'Pegawai Disiplin', point: 7, kategori: 'k3', penerangan: 'Menjaga disiplin pelajar sekolah' },
-  { id: 't4', nama: 'Penyelaras Kokurikulum', point: 7, kategori: 'k4', penerangan: 'Menyelaras aktiviti kokurikulum sekolah' },
-  { id: 't5', nama: 'Setiausaha Mesyuarat', point: 3, kategori: 'k1', penerangan: 'Menyediakan minit mesyuarat' },
-  { id: 't6', nama: 'Penolong Kanan 1', point: 10, kategori: 'k1', penerangan: 'Membantu pentadbiran sekolah' },
-  { id: 't7', nama: 'Penyelaras Sukan', point: 6, kategori: 'k4', penerangan: 'Menyelaras acara sukan sekolah' },
-  { id: 't8', nama: 'Pengawas Pusat Sumber', point: 4, kategori: 'k2', penerangan: 'Mengurus pusat sumber sekolah' },
-  { id: 't9', nama: 'Penyelaras Bantuan', point: 5, kategori: 'k3', penerangan: 'Mengurus bantuan pelajar miskin' },
-  { id: 't10', nama: 'Setiausaha Kewangan', point: 6, kategori: 'k1', penerangan: 'Mengurus kewangan kelab dan badan' },
-  { id: 't11', nama: 'Pegawai Perhubungan Awam', point: 4, kategori: 'k1', penerangan: 'Mengurus hubungan luar sekolah' },
-  { id: 't12', nama: 'Penyelaras STEM', point: 5, kategori: 'k2', penerangan: 'Menyelaras program STEM' },
-  { id: 't13', nama: 'Guru Ganti', point: 3, kategori: 'k2', penerangan: 'Menggantikan guru tidak hadir' },
-  { id: 't14', nama: 'Penyelaras Majlis', point: 4, kategori: 'k4', penerangan: 'Menyelaras majlis dan perhimpunan' },
-  { id: 't15', nama: 'Penyelaras Data SQL', point: 6, kategori: 'k1', penerangan: 'Mengurus pangkalan data sekolah' },
-  { id: 't16', nama: 'Kaunselor Pelajar', point: 5, kategori: 'k3', penerangan: 'Memberi kaunseling kepada pelajar' }
+  { id: 't001', nama: 'Guru Kelas Tingkatan 3A', point: 5, kategori: 'kat02', penerangan: 'Mengurus hal ehwal kelas' },
+  { id: 't002', nama: 'Guru Kelas Tingkatan 2B', point: 5, kategori: 'kat02', penerangan: 'Mengurus hal ehwal kelas' },
+  { id: 't003', nama: 'Setiausaha Peperiksaan', point: 8, kategori: 'kat02', penerangan: 'Mengurus jadual & kertas peperiksaan' },
+  { id: 't004', nama: 'Pegawai Disiplin', point: 7, kategori: 'kat03', penerangan: 'Mengurus disiplin murid' },
+  { id: 't005', nama: 'Guru Warden Asrama', point: 6, kategori: 'kat03', penerangan: 'Mengawas asrama' },
+  { id: 't006', nama: 'Penasihat Kelab STEM', point: 4, kategori: 'kat04', penerangan: 'Membimbing kelab STEM' },
+  { id: 't007', nama: 'Penasihat Kelab Pidato', point: 3, kategori: 'kat04', penerangan: 'Membimbing kelab pidato' },
+  { id: 't008', nama: 'Setiausaha Mesyuarat', point: 3, kategori: 'kat01', penerangan: 'Mencatat minit mesyuarat' },
+  { id: 't009', nama: 'Penyelaras ICT', point: 6, kategori: 'kat01', penerangan: 'Mengurus sistem ICT sekolah' },
+  { id: 't010', nama: 'Ketua Panitia Matematik', point: 6, kategori: 'kat01', penerangan: 'Ketua panitia Matematik' },
+  { id: 't011', nama: 'Guru Pengawas', point: 7, kategori: 'kat01', penerangan: 'Mengurus pengawas sekolah' },
+  { id: 't012', nama: 'Penolong Warden', point: 4, kategori: 'kat03', penerangan: 'Membantu warden' },
+  { id: 't013', nama: 'Penasihat Kelab Rukun Negara', point: 3, kategori: 'kat04', penerangan: 'Membimbing kelab' },
+  { id: 't014', nama: 'Jurulatih Sukan', point: 5, kategori: 'kat04', penerangan: 'Melatih pasukan sukan' },
+  { id: 't015', nama: 'Penyelaras Program Nilam', point: 4, kategori: 'kat02', penerangan: 'Program bacaan nilam' },
+  { id: 't016', nama: 'Penyelaras BKK', point: 5, kategori: 'kat03', penerangan: 'Mengurus bantuan kebajikan' }
 ];
 
 const MOCK_TUGASAN = [
-  { id: 'a1', guruId: 'g1', tugasId: 't6', status: 'Aktif', tarikh: '2026-01-15' },
-  { id: 'a2', guruId: 'g1', tugasId: 't5', status: 'Aktif', tarikh: '2026-01-15' },
-  { id: 'a3', guruId: 'g2', tugasId: 't2', status: 'Aktif', tarikh: '2026-01-15' },
-  { id: 'a4', guruId: 'g2', tugasId: 't12', status: 'Aktif', tarikh: '2026-01-20' },
-  { id: 'a5', guruId: 'g3', tugasId: 't3', status: 'Aktif', tarikh: '2026-01-15' },
-  { id: 'a6', guruId: 'g3', tugasId: 't9', status: 'Aktif', tarikh: '2026-01-18' },
-  { id: 'a7', guruId: 'g4', tugasId: 't4', status: 'Aktif', tarikh: '2026-01-15' },
-  { id: 'a8', guruId: 'g4', tugasId: 't7', status: 'Aktif', tarikh: '2026-01-15' },
-  { id: 'a9', guruId: 'g4', tugasId: 't14', status: 'Aktif', tarikh: '2026-02-01' },
-  { id: 'a10', guruId: 'g5', tugasId: 't1', status: 'Aktif', tarikh: '2026-01-15' },
-  { id: 'a11', guruId: 'g5', tugasId: 't13', status: 'Aktif', tarikh: '2026-01-22' },
-  { id: 'a12', guruId: 'g6', tugasId: 't1', status: 'Aktif', tarikh: '2026-01-15' },
-  { id: 'a13', guruId: 'g6', tugasId: 't8', status: 'Aktif', tarikh: '2026-01-20' },
-  { id: 'a14', guruId: 'g7', tugasId: 't1', status: 'Aktif', tarikh: '2026-01-15' },
-  { id: 'a15', guruId: 'g7', tugasId: 't11', status: 'Aktif', tarikh: '2026-01-25' },
-  { id: 'a16', guruId: 'g8', tugasId: 't10', status: 'Aktif', tarikh: '2026-01-15' },
-  { id: 'a17', guruId: 'g8', tugasId: 't16', status: 'Aktif', tarikh: '2026-01-20' },
-  { id: 'a18', guruId: 'g5', tugasId: 't15', status: 'Aktif', tarikh: '2026-02-01' }
+  { id: 'tg001', guruId: 'g001', tugasId: 't001', status: 'Aktif', tarikh: '2026-01-10' },
+  { id: 'tg002', guruId: 'g002', tugasId: 't002', status: 'Aktif', tarikh: '2026-01-10' },
+  { id: 'tg003', guruId: 'g003', tugasId: 't015', status: 'Aktif', tarikh: '2026-01-15' },
+  { id: 'tg004', guruId: 'g004', tugasId: 't003', status: 'Aktif', tarikh: '2026-02-01' },
+  { id: 'tg005', guruId: 'g005', tugasId: 't009', status: 'Aktif', tarikh: '2026-01-10' },
+  { id: 'tg006', guruId: 'g006', tugasId: 't007', status: 'Aktif', tarikh: '2026-02-01' },
+  { id: 'tg007', guruId: 'g007', tugasId: 't008', status: 'Aktif', tarikh: '2026-01-10' },
+  { id: 'tg008', guruId: 'g008', tugasId: 't011', status: 'Aktif', tarikh: '2026-01-10' },
+  { id: 'tg009', guruId: 'g001', tugasId: 't010', status: 'Aktif', tarikh: '2026-02-01' },
+  { id: 'tg010', guruId: 'g002', tugasId: 't006', status: 'Aktif', tarikh: '2026-02-15' },
+  { id: 'tg011', guruId: 'g003', tugasId: 't005', status: 'Aktif', tarikh: '2026-03-01' },
+  { id: 'tg012', guruId: 'g004', tugasId: 't003', status: 'Aktif', tarikh: '2026-03-01' },
+  { id: 'tg013', guruId: 'g005', tugasId: 't004', status: 'Aktif', tarikh: '2026-03-01' },
+  { id: 'tg014', guruId: 'g006', tugasId: 't014', status: 'Aktif', tarikh: '2026-03-15' },
+  { id: 'tg015', guruId: 'g001', tugasId: 't012', status: 'Aktif', tarikh: '2026-04-01' },
+  { id: 'tg016', guruId: 'g008', tugasId: 't013', status: 'Aktif', tarikh: '2026-04-01' },
+  { id: 'tg017', guruId: 'g002', tugasId: 't016', status: 'Aktif', tarikh: '2026-04-15' },
+  { id: 'tg018', guruId: 'g003', tugasId: 't011', status: 'Aktif', tarikh: '2026-05-01' }
 ];
 
 const DEFAULT_TETAPAN = {
@@ -78,28 +85,139 @@ const DEFAULT_TETAPAN = {
   namaSistem: 'Sistem Pengurusan Tugas Guru'
 };
 
-// --- Initialize localStorage with mock data if empty ---
-function initData() {
-  if (!localStorage.getItem(STORAGE_KEYS.GURU)) {
-    localStorage.setItem(STORAGE_KEYS.GURU, JSON.stringify(MOCK_GURU));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.TUGAS)) {
-    localStorage.setItem(STORAGE_KEYS.TUGAS, JSON.stringify(MOCK_TUGAS));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.TUGASAN)) {
-    localStorage.setItem(STORAGE_KEYS.TUGASAN, JSON.stringify(MOCK_TUGASAN));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.TETAPAN)) {
-    localStorage.setItem(STORAGE_KEYS.TETAPAN, JSON.stringify(DEFAULT_TETAPAN));
+// ============================================================
+// API — Fetch Data from Google Sheets
+// ============================================================
+
+async function apiFetch(action) {
+  try {
+    const url = API_URL + '?action=' + action;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    return json.success ? json : null;
+  } catch (e) {
+    console.warn('API fetch error for ' + action + ':', e.message);
+    return null;
   }
 }
 
-// --- UUID Generator (simple) ---
-function generateId() {
-  return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+async function apiPost(data) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.warn('API post error:', e.message);
+    return { success: false, error: e.message };
+  }
 }
 
-// --- Helper: get from localStorage ---
+// ============================================================
+// MAP API FORMAT → APP FORMAT
+// ============================================================
+
+function mapGuruFromApi(apiRow) {
+  return {
+    id: (apiRow.ID || '').toString().toLowerCase(),
+    nama: apiRow.Nama || '',
+    jawatan: apiRow.Jawatan || ''
+  };
+}
+
+function mapKategoriFromApi(apiRow) {
+  return {
+    id: (apiRow.ID || '').toString().toLowerCase(),
+    nama: apiRow.Kategori || ''
+  };
+}
+
+function mapTugasFromApi(apiRow) {
+  const katId = (apiRow.Kategori || '').toLowerCase();
+  // Cari mapping kategori
+  const katMap = { pentadbiran: 'kat01', kurikulum: 'kat02', hem: 'kat03', kokurikulum: 'kat04' };
+  const mappedKat = katMap[katId] || katId;
+  return {
+    id: (apiRow.ID || '').toString().toLowerCase(),
+    nama: apiRow.Tugas || '',
+    point: parseInt(apiRow.Point) || 0,
+    kategori: mappedKat,
+    penerangan: apiRow.Penerangan || ''
+  };
+}
+
+function mapTugasanFromApi(apiRow) {
+  return {
+    id: (apiRow.ID || '').toString().toLowerCase(),
+    guruId: (apiRow.GuruID || '').toString().toLowerCase(),
+    tugasId: (apiRow.TugasID || '').toString().toLowerCase(),
+    status: apiRow.Status || 'Aktif',
+    tarikh: apiRow.TarikhAssign || ''
+  };
+}
+
+function mapTetapanFromApi(apiRows) {
+  if (!apiRows || !Array.isArray(apiRows)) return { ...DEFAULT_TETAPAN };
+  const result = { ...DEFAULT_TETAPAN };
+  apiRows.forEach(row => {
+    if (row.Kunci === 'NamaSekolah') result.namaSekolah = row.Nilai || result.namaSekolah;
+    if (row.Kunci === 'LogoURL') result.logoUrl = row.Nilai || '';
+    if (row.Kunci === 'WarnaUtama') result.warnaTema = row.Nilai || result.warnaTema;
+  });
+  return result;
+}
+
+// ============================================================
+// SYNC — Fetch All Data from API → localStorage
+// ============================================================
+
+let syncPromise = null;
+
+async function syncDataFromApi() {
+  // Prevent multiple simultaneous syncs
+  if (syncPromise) return syncPromise;
+  
+  syncPromise = (async () => {
+    const result = await apiFetch('getAll');
+    if (!result || !result.guru) return false;
+
+    // Map & save Guru
+    const guru = (result.guru || []).map(mapGuruFromApi);
+    if (guru.length > 0) localStorage.setItem(STORAGE_KEYS.GURU, JSON.stringify(guru));
+
+    // Map & save Kategori
+    const kategori = (result.kategori || []).map(mapKategoriFromApi);
+    if (kategori.length > 0) localStorage.setItem(STORAGE_KEYS.KATEGORI, JSON.stringify(kategori));
+
+    // Map & save Tugas
+    const tugas = (result.tugas || []).map(mapTugasFromApi);
+    if (tugas.length > 0) localStorage.setItem(STORAGE_KEYS.TUGAS, JSON.stringify(tugas));
+
+    // Map & save Tugasan
+    const tugasan = (result.tugasan || []).map(mapTugasanFromApi);
+    if (tugasan.length > 0) localStorage.setItem(STORAGE_KEYS.TUGASAN, JSON.stringify(tugasan));
+
+    // Map & save Tetapan
+    const tetapan = mapTetapanFromApi(result.tetapan || []);
+    localStorage.setItem(STORAGE_KEYS.TETAPAN, JSON.stringify(tetapan));
+
+    localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+    return true;
+  })();
+
+  const ok = await syncPromise;
+  syncPromise = null;
+  return ok;
+}
+
+// ============================================================
+// HELPERS — localStorage
+// ============================================================
+
 function getData(key) {
   try {
     const raw = localStorage.getItem(key);
@@ -111,6 +229,29 @@ function getData(key) {
 
 function setData(key, data) {
   localStorage.setItem(key, JSON.stringify(data));
+}
+
+function generateId() {
+  return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+}
+
+function initData() {
+  // Only init if localStorage is empty
+  if (!localStorage.getItem(STORAGE_KEYS.GURU)) {
+    localStorage.setItem(STORAGE_KEYS.GURU, JSON.stringify(MOCK_GURU));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.TUGAS)) {
+    localStorage.setItem(STORAGE_KEYS.TUGAS, JSON.stringify(MOCK_TUGAS));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.TUGASAN)) {
+    localStorage.setItem(STORAGE_KEYS.TUGASAN, JSON.stringify(MOCK_TUGASAN));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.KATEGORI)) {
+    localStorage.setItem(STORAGE_KEYS.KATEGORI, JSON.stringify(MOCK_KATEGORI));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.TETAPAN)) {
+    localStorage.setItem(STORAGE_KEYS.TETAPAN, JSON.stringify(DEFAULT_TETAPAN));
+  }
 }
 
 // ============================================================
@@ -127,13 +268,11 @@ function getGuruById(id) {
 
 function addGuru(nama, jawatan) {
   const list = getGuru();
-  const newGuru = {
-    id: generateId(),
-    nama: nama.trim(),
-    jawatan: jawatan.trim()
-  };
+  const newGuru = { id: generateId(), nama: nama.trim(), jawatan: jawatan.trim() };
   list.push(newGuru);
   setData(STORAGE_KEYS.GURU, list);
+  // Try API sync (async, don't wait)
+  apiPost({ action: 'addGuru', fields: { ID: newGuru.id, Nama: newGuru.nama, Jawatan: newGuru.jawatan, KataLaluan: 'guru123', Panitia: '' } });
   return newGuru;
 }
 
@@ -141,10 +280,10 @@ function deleteGuru(id) {
   let list = getGuru();
   list = list.filter(g => g.id !== id);
   setData(STORAGE_KEYS.GURU, list);
-  // Also remove assignments for this teacher
   let tugasan = getTugasan();
   tugasan = tugasan.filter(a => a.guruId !== id);
   setData(STORAGE_KEYS.TUGASAN, tugasan);
+  apiPost({ action: 'deleteGuru', id: id.toUpperCase() });
   return true;
 }
 
@@ -163,11 +302,11 @@ function updateGuru(id, nama, jawatan) {
 // ============================================================
 
 function getKategori() {
-  return [...MOCK_KATEGORI];
+  return getData(STORAGE_KEYS.KATEGORI);
 }
 
 function getKategoriById(id) {
-  return MOCK_KATEGORI.find(k => k.id === id) || null;
+  return getKategori().find(k => k.id === id) || null;
 }
 
 function getKategoriNama(id) {
@@ -202,6 +341,9 @@ function addTugas(nama, point, kategori, penerangan) {
   };
   list.push(newTugas);
   setData(STORAGE_KEYS.TUGAS, list);
+  // Map kategori ID → Nama for API
+  const katNama = getKategoriNama(kategori);
+  apiPost({ action: 'addTugas', fields: { ID: newTugas.id.toUpperCase(), Tugas: newTugas.nama, Point: newTugas.point, Kategori: katNama, Penerangan: newTugas.penerangan } });
   return newTugas;
 }
 
@@ -209,10 +351,10 @@ function deleteTugas(id) {
   let list = getTugas();
   list = list.filter(t => t.id !== id);
   setData(STORAGE_KEYS.TUGAS, list);
-  // Also remove assignments for this task
   let tugasan = getTugasan();
   tugasan = tugasan.filter(a => a.tugasId !== id);
   setData(STORAGE_KEYS.TUGASAN, tugasan);
+  apiPost({ action: 'deleteTugas', id: id.toUpperCase() });
   return true;
 }
 
@@ -245,12 +387,9 @@ function getTugasanByTugas(tugasId) {
 }
 
 function assignTugas(guruId, tugasId, tarikh) {
-  // Check if already assigned
   const existing = getTugasan();
   const dup = existing.find(a => a.guruId === guruId && a.tugasId === tugasId);
-  if (dup) {
-    return { error: 'Tugas ini sudah diberikan kepada guru tersebut.' };
-  }
+  if (dup) return { error: 'Tugas ini sudah diberikan kepada guru tersebut.' };
 
   const newAssign = {
     id: generateId(),
@@ -261,6 +400,7 @@ function assignTugas(guruId, tugasId, tarikh) {
   };
   existing.push(newAssign);
   setData(STORAGE_KEYS.TUGASAN, existing);
+  apiPost({ action: 'assignTugas', guruId: guruId.toUpperCase(), tugasId: tugasId.toUpperCase() });
   return { success: true, data: newAssign };
 }
 
@@ -268,6 +408,7 @@ function deleteTugasan(id) {
   let list = getTugasan();
   list = list.filter(a => a.id !== id);
   setData(STORAGE_KEYS.TUGASAN, list);
+  apiPost({ action: 'deleteTugasan', id: id.toUpperCase() });
   return true;
 }
 
@@ -277,6 +418,7 @@ function updateTugasanStatus(id, status) {
   if (idx === -1) return false;
   list[idx].status = status;
   setData(STORAGE_KEYS.TUGASAN, list);
+  apiPost({ action: 'updateTugasanStatus', id: id.toUpperCase(), status: status });
   return true;
 }
 
@@ -301,6 +443,9 @@ function saveTetapan(data) {
   const current = getTetapan();
   const updated = { ...current, ...data };
   setData(STORAGE_KEYS.TETAPAN, updated);
+  // Sync specific keys to API
+  if (data.namaSekolah !== undefined) apiPost({ action: 'updateTetapan', kunci: 'NamaSekolah', nilai: data.namaSekolah });
+  if (data.warnaTema !== undefined) apiPost({ action: 'updateTetapan', kunci: 'WarnaUtama', nilai: data.warnaTema });
   return updated;
 }
 
@@ -347,7 +492,6 @@ function getStatKeseluruhan() {
   const guru = getGuru();
   const tugas = getTugas();
   const tugasan = getTugasan();
-
   return {
     totalGuru: guru.length,
     totalTugas: tugas.length,
@@ -379,6 +523,20 @@ function cariTugas(query) {
 }
 
 // ============================================================
-// Initialize on load
+// INIT — Run on page load
 // ============================================================
+
+// Step 1: Init localStorage with mock data if empty
 initData();
+
+// Step 2: Try to sync from API (async)
+syncDataFromApi().then(ok => {
+  if (ok) {
+    console.log('✅ Data synced from Google Sheets');
+    // Refresh halaman jika ada data baru
+    const event = new CustomEvent('dataSynced');
+    window.dispatchEvent(event);
+  } else {
+    console.log('ℹ️ Using local data (API unavailable)');
+  }
+});
