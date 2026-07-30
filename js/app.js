@@ -158,13 +158,19 @@ document.addEventListener('DOMContentLoaded', function() {
   setActiveNav();
   setupMobileNav();
 
-  // Apply theme color from settings
+  // Apply theme color & logo from settings
   try {
     const tetapan = getTetapan();
     if (tetapan.warnaTema) {
       document.documentElement.style.setProperty('--primary', tetapan.warnaTema);
-      // Generate a darker shade
       document.documentElement.style.setProperty('--primary-dark', tetapan.warnaTema);
+    }
+    // Logo untuk admin navbar
+    if (tetapan.logoUrl && tetapan.logoUrl.trim() !== '') {
+      var brand = document.querySelector('.navbar-brand');
+      if (brand) {
+        brand.innerHTML = '<img src="' + tetapan.logoUrl.trim() + '" style="height:32px;width:auto;vertical-align:middle;margin-right:8px;" alt="Logo"> STG Admin';
+      }
     }
   } catch(e) {
     // data.js not loaded yet or not needed
