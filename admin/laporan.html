@@ -30,7 +30,7 @@
         <h2>📊 Laporan & Analisis</h2>
         <p>Ringkasan pengagihan tugas dan mata setiap guru</p>
       </div>
-      <button class="btn btn-outline btn-sm" onclick="window.print()">🖨️ Cetak Laporan</button>
+      <button class="btn btn-outline btn-sm" onclick="cetakLaporanProPer()">🖨️ Cetak Laporan</button>
     </div>
 
     <!-- Summary Stats -->
@@ -93,6 +93,120 @@
 <script src="../js/data.js"></script>
 <script src="../js/app.js"></script>
 <script>
+// === Cetak Laporan Format Proper ===
+function cetakLaporanProPer() {
+  var tetapan = getTetapan();
+  var laporan = getLaporanGuru();
+  var semuaGuru = getGuru();
+
+  // Cari Pengetua dari Senarai_Guru
+  var pengetua = null;
+  for (var i = 0; i < semuaGuru.length; i++) {
+    var j = semuaGuru[i].jawatan ? semuaGuru[i].jawatan.toLowerCase() : '';
+    if (j.indexOf('pengetua') !== -1 || j.indexOf('pengetua') !== -1) {
+      pengetua = semuaGuru[i].nama;
+      break;
+    }
+  }
+  if (!pengetua) pengetua = '___________________';
+
+  var sekolah = tetapan.namaSekolah || 'SMK (P) Jalan Ipoh';
+  var today = new Date();
+  var hari = today.toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Kira jumlah keseluruhan
+  var totalGuru = laporan.length;
+  var totalMata = 0;
+  var totalTugasan = 0;
+  laporan.forEach(function(g) {
+    totalMata += g.totalPoint;
+    totalTugasan += g.jumlahTugas;
+  });
+
+  // Bina jadual HTML
+  var tableRows = '';
+  laporan.forEach(function(g, i) {
+    var senaraiTugas = '';
+    if (g.tugasList.length > 0) {
+      g.tugasList.forEach(function(t, idx) {
+        if (idx > 0) senaraiTugas += '<br>';
+        senaraiTugas += '• ' + t.nama + ' (' + t.point + ' pt)';
+      });
+    } else {
+      senaraiTugas = '<span style="color:#999;">Tiada tugasan</span>';
+    }
+    tableRows += '<tr>' +
+      '<td style="text-align:center;width:40px;">' + (i + 1) + '</td>' +
+      '<td><strong>' + g.nama + '</strong></td>' +
+      '<td>' + (g.jawatan || '—') + '</td>' +
+      '<td style="font-size:11px;">' + senaraiTugas + '</td>' +
+      '<td style="text-align:center;font-weight:700;color:#1e40af;">' + g.totalPoint + '</td>' +
+      '</tr>';
+  });
+
+  // Buka window baru
+  var w = window.open('', '_blank', 'width=1100,height=800');
+
+  w.document.write('<!DOCTYPE html><html lang="ms"><head><meta charset="UTF-8">');
+  w.document.write('<title>Laporan Pengagihan Tugas Guru - ' + sekolah + '</title>');
+  w.document.write('<style>');
+  w.document.write('@page { margin: 20mm 15mm 20mm 15mm; }');
+  w.document.write('* { margin: 0; padding: 0; box-sizing: border-box; }');
+  w.document.write('body { font-family: "Segoe UI", Arial, sans-serif; color: #222; padding: 30px; font-size: 12px; }');
+  w.document.write('.header { text-align: center; margin-bottom: 25px; border-bottom: 3px double #1e40af; padding-bottom: 15px; }');
+  w.document.write('.header h1 { font-size: 18px; color: #1e40af; margin-bottom: 3px; }');
+  w.document.write('.header h2 { font-size: 14px; color: #333; font-weight: normal; }');
+  w.document.write('.header .sub { font-size: 11px; color: #666; margin-top: 3px; }');
+  w.document.write('.meta { display: flex; justify-content: space-between; margin-bottom: 15px; padding: 8px 12px; background: #f0f4ff; border-radius: 5px; font-size: 11px; }');
+  w.document.write('.meta span { font-weight: 600; color: #1e40af; }');
+  w.document.write('table { width: 100%; border-collapse: collapse; font-size: 11px; }');
+  w.document.write('thead th { background: #1e40af; color: white; padding: 8px 6px; text-align: center; font-weight: 600; border: 1px solid #1a36a0; }');
+  w.document.write('tbody td { padding: 6px 5px; border: 1px solid #d0d5dd; text-align: left; }');
+  w.document.write('tbody tr:nth-child(even) { background: #f8faff; }');
+  w.document.write('.footer { margin-top: 30px; display: flex; justify-content: space-between; font-size: 11px; }');
+  w.document.write('.ttd { text-align: center; width: 200px; }');
+  w.document.write('.ttd .line { margin-top: 50px; padding-top: 3px; border-top: 1px solid #333; font-weight: 600; }');
+  w.document.write('.summary { margin: 15px 0; padding: 10px 15px; background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 4px; font-size: 11px; }');
+  w.document.write('.summary span { font-weight: 700; color: #166534; }');
+  w.document.write('.no-print { text-align: center; margin: 20px 0; }');
+  w.document.write('.no-print button { padding: 10px 30px; font-size: 14px; background: #1e40af; color: white; border: none; border-radius: 6px; cursor: pointer; margin: 0 5px; }');
+  w.document.write('.no-print button:hover { background: #2563eb; }');
+  w.document.write('@media print { body { padding: 0; } .no-print { display: none; } }');
+  w.document.write('</style></head><body>');
+
+  w.document.write('<div class="no-print"><button onclick="window.print()">🖨️ Cetak Laporan Ini</button><button onclick="window.close()" style="background:#6b7280;">✖ Tutup</button></div>');
+
+  w.document.write('<div class="header">');
+  w.document.write('<h1>' + sekolah + '</h1>');
+  w.document.write('<h2>LAPORAN PENGAGIHAN TUGAS GURU</h2>');
+  w.document.write('<div class="sub">Sistem Pemberatan Tugas Guru (SPTG)</div></div>');
+
+  w.document.write('<div class="meta">');
+  w.document.write('<div><span>Bilangan Guru:</span> ' + totalGuru + ' orang</div>');
+  w.document.write('<div><span>Jumlah Tugasan:</span> ' + totalTugasan + '</div>');
+  w.document.write('<div><span>Jumlah Mata:</span> ' + totalMata + '</div>');
+  w.document.write('<div><span>Tarikh Cetak:</span> ' + hari + '</div></div>');
+
+  w.document.write('<div class="summary">📊 Ringkasan: Seramai <span>' + totalGuru + '</span> orang guru menerima <span>' + totalTugasan + '</span> tugasan dengan jumlah mata keseluruhan <span>' + totalMata + '</span>.</div>');
+
+  w.document.write('<table><thead><tr><th>Bil</th><th>Nama Guru</th><th>Jawatan</th><th>Senarai Tugasan</th><th>Jumlah Mata</th></tr></thead><tbody>');
+  w.document.write(tableRows);
+  w.document.write('</tbody></table>');
+
+  w.document.write('<div class="footer" style="justify-content:center;">');
+  w.document.write('<div class="ttd"><div>Diluluskan oleh:</div><div class="line">( ' + pengetua + ' )</div><div style="font-size:10px;color:#666;margin-top:3px;">Pengetua ' + sekolah + '</div></div>');
+  w.document.write('</div>');
+
+  w.document.write('<div style="text-align:center;margin-top:15px;font-size:9px;color:#999;border-top:1px dotted #ccc;padding-top:8px;">');
+  w.document.write('Laporan ini dijana secara automatik oleh Sistem Pemberatan Tugas Guru (SPTG) — ' + hari + '</div>');
+
+  w.document.write('<div class="no-print" style="margin-top:10px;"><button onclick="window.print()">🖨️ Cetak Laporan Ini</button><button onclick="window.close()" style="background:#6b7280;">✖ Tutup</button></div>');
+
+  w.document.write('<script>window.onload=function(){setTimeout(function(){window.print();},500);};<' + '/script>');
+  w.document.write('</body></html>');
+  w.document.close();
+}
+
 // === Laporan Render ===
 
 function renderReportStats() {
