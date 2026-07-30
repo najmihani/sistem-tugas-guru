@@ -12,7 +12,7 @@
 <header class="school-header">
   <div class="container d-flex align-center justify-between">
     <div class="header-logo">
-      <div class="logo-icon">📚</div>
+      <div class="logo-icon" id="logoIcon"><span id="logoEmoji">📚</span><img id="logoImage" src="" style="display:none;height:50px;width:auto;" alt="Logo"></div>
       <div>
         <div class="school-name" id="schoolNameHeader">SMK (P) Jalan Ipoh</div>
         <div class="school-subtitle">Sistem Pengurusan Tugas Guru</div>
@@ -209,8 +209,15 @@ function kategoriBadgeClass(id) {
 function applySchoolName() {
   try {
     var tetapan = getTetapan();
-    if (tetapan && tetapan.namaSekolah) {
+    if (tetapan.namaSekolah) {
       document.getElementById('schoolNameHeader').textContent = tetapan.namaSekolah;
+    }
+    // Logo dari tetapan
+    if (tetapan.logoUrl && tetapan.logoUrl.trim() !== '') {
+      document.getElementById('logoEmoji').style.display = 'none';
+      var img = document.getElementById('logoImage');
+      img.src = tetapan.logoUrl.trim();
+      img.style.display = '';
     }
   } catch(e) {}
 }
